@@ -1,0 +1,162 @@
+[
+  {
+    "id": "v2_q1",
+    "question": "Tujuan utama penulisan artikel adalah ....",
+    "options": {
+      "A": "Menghibur pembaca dengan cerita imajinatif",
+      "B": "Menyampaikan gagasan atau informasi mengenai suatu persoalan",
+      "C": "Menggambarkan tokoh dan peristiwa secara kronologis",
+      "D": "Menceritakan pengalaman pribadi penulis"
+    },
+    "answer": "B",
+    "explanation": "Artikel merupakan tulisan yang berisi gagasan, pandangan, atau informasi mengenai suatu persoalan yang disampaikan kepada pembaca.",
+    "origin": "Soal pengguna",
+    "old_id": "q1",
+    "bloom": "C2",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q2",
+    "question": "Perbedaan topik dan tesis yang tepat adalah ...",
+    "options": {
+      "A": "Topik selalu lebih panjang daripada tesis",
+      "B": "Topik menamai persoalan; tesis menyatakan posisi penulis",
+      "C": "Tesis adalah daftar sumber",
+      "D": "Topik harus berupa pertanyaan"
+    },
+    "answer": "B",
+    "explanation": "Tesis menunjukkan pandangan spesifik mengenai persoalan yang dibahas.",
+    "origin": "Tambahan pengembang — perlu telaah guru",
+    "old_id": "q5",
+    "bloom": "C2",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q3",
+    "question": "Sumber menyatakan, “Siswa perlu memeriksa informasi AI sebelum menggunakannya.” Parafrasa yang mempertahankan makna dan etika kutipan adalah ...",
+    "options": {
+      "A": "Jawaban AI pasti benar dan tidak perlu diperiksa.",
+      "B": "Siswa perlu memeriksa informasi AI sebelum menggunakannya. (tanpa menyebut sumber)",
+      "C": "Menurut sumber tersebut, siswa perlu mengecek informasi dari AI sebelum memanfaatkannya.",
+      "D": "AI harus dilarang karena semua jawabannya salah."
+    },
+    "answer": "C",
+    "explanation": "Pilihan C menyusun kembali gagasan tanpa mengubah kewajiban memeriksa informasi dan tetap memberikan atribusi. Mengganti susunan bahasa saja tidak menghapus kebutuhan menyebut sumber.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q9",
+    "bloom": "C3",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q4",
+    "question": "Sunting kalimat berikut agar efektif: “Para siswa-siswa perlu sekali sangat memeriksa sumber informasi.” Hasil suntingan yang tepat adalah ...",
+    "options": {
+      "A": "Para siswa-siswa sangat memeriksa sekali sumber.",
+      "B": "Siswa perlu memeriksa sumber informasi.",
+      "C": "Para semua siswa-siswa perlu sekali membaca sumber.",
+      "D": "Sumber informasi para siswa memeriksa sekali."
+    },
+    "answer": "B",
+    "explanation": "Pilihan B menerapkan prinsip kehematan kata dan menghilangkan penanda jamak serta penguat yang berlebihan tanpa menghilangkan pesan utama.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q11",
+    "bloom": "C3",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q5",
+    "question": "Baca: (1) Dalam tugas ini, artikel ditulis 500–700 kata. (2) AI adalah solusi terbaik untuk semua persoalan pendidikan. Hubungan kedua pernyataan tersebut adalah ...",
+    "options": {
+      "A": "Keduanya fakta hanya karena menggunakan istilah pendidikan.",
+      "B": "Pernyataan (1) merupakan opini dan (2) ketentuan tugas.",
+      "C": "Pernyataan (1) adalah ketentuan yang dapat diperiksa; (2) penilaian yang terlalu menyeluruh dan memerlukan argumen.",
+      "D": "Pernyataan (2) membuktikan kebenaran ketentuan pada (1)."
+    },
+    "answer": "C",
+    "explanation": "Pernyataan pertama dapat dibandingkan dengan instruksi tugas. Kedua memuat penilaian “terbaik” dan generalisasi “semua”; tidak membuktikan ketentuan jumlah kata.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q4",
+    "bloom": "C4",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q6",
+    "question": "Baca: “AI dapat memberi penjelasan tambahan. Selain itu, sampah plastik di kantin meningkat. Oleh karena itu, semua siswa perlu mengikuti lomba puisi.” Masalah hubungan gagasan paragraf ini adalah ...",
+    "options": {
+      "A": "Tidak ada konjungsi sama sekali.",
+      "B": "Ada penanda hubungan, tetapi gagasan dan simpulan tidak membentuk alur logis.",
+      "C": "Semua kalimat salah karena tidak memakai angka.",
+      "D": "Jumlah kalimat terlalu sedikit sehingga pasti tidak koheren."
+    },
+    "answer": "B",
+    "explanation": "Konjungsi menandai hubungan bentuk, tetapi perpindahan AI–sampah–lomba puisi tidak dijelaskan. Simpulan tidak didukung kalimat sebelumnya.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q14",
+    "bloom": "C4",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q7",
+    "question": "Siswa ingin menulis 500–700 kata dan hanya dapat mengamati kantin sekolah. Hubungan topik dengan ruang lingkup yang paling tepat adalah ...",
+    "options": {
+      "A": "Seluruh perkembangan teknologi dunia karena topiknya besar.",
+      "B": "Semua masalah pendidikan Indonesia karena banyak pendapat.",
+      "C": "Sejarah seluruh budaya dunia karena sumbernya luas.",
+      "D": "Pembiasaan membawa tumbler di kantin sekolah karena objeknya terbatas dan bukti dapat dikumpulkan."
+    },
+    "answer": "D",
+    "explanation": "Topik perlu dihubungkan dengan panjang tulisan serta akses bukti. Pilihan D memungkinkan pengamatan yang sesuai konteks tugas.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q16",
+    "bloom": "C4",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q8",
+    "question": "Penulis menyatakan sampah kemasan kantin meningkat. Bukti manakah yang paling kuat untuk menilai klaim tersebut?",
+    "options": {
+      "A": "Pendapat satu teman yang tidak pernah menghitung sampah.",
+      "B": "Jumlah penonton film yang sedang populer.",
+      "C": "Catatan jumlah sampah kantin dari dua periode dengan lama pengamatan dan metode yang sama.",
+      "D": "Foto satu botol tanpa tanggal atau lokasi."
+    },
+    "answer": "C",
+    "explanation": "Klaim kenaikan membutuhkan perbandingan. Data dari dua periode dengan metode sebanding lebih kuat daripada kesan sesaat atau informasi yang tidak relevan.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q7",
+    "bloom": "C5",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q9",
+    "question": "Sebuah artikel mengutip “90% siswa lebih pintar setelah menggunakan AI”, tetapi tidak mencantumkan sumber atau cara mengukur “lebih pintar”. Keputusan penyunting yang paling dapat dipertanggungjawabkan adalah ...",
+    "options": {
+      "A": "Tetap memuatnya karena persentasenya meyakinkan.",
+      "B": "Menghapus tanda persen agar klaim terlihat lebih wajar.",
+      "C": "Menunda pemakaian klaim sampai sumber dan pengukurannya dapat diperiksa; menggantinya jika tidak terverifikasi.",
+      "D": "Menambahkan kata pasti agar pembaca percaya."
+    },
+    "answer": "C",
+    "explanation": "Penilaian dilakukan terhadap keterlacakan sumber dan validitas ukuran. Mengubah bentuk angka atau menambah kepastian tidak memperbaiki dasar bukti.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q15",
+    "bloom": "C5",
+    "version": "artikel-10-bloom-v2"
+  },
+  {
+    "id": "v2_q10",
+    "question": "Tesis penulis: “Semua siswa wajib membeli tumbler mahal.” Keberatan: sebagian siswa tidak mampu membelinya. Perbaikan argumen yang paling layak adalah ...",
+    "options": {
+      "A": "Menganggap siswa yang keberatan tidak peduli lingkungan.",
+      "B": "Mempertimbangkan wadah pakai ulang yang terjangkau serta fasilitas isi ulang, lalu menilai kelayakannya.",
+      "C": "Mengabaikan biaya karena penulis sudah memilih tesis.",
+      "D": "Menyatakan semua tumbler pasti murah tanpa data."
+    },
+    "answer": "B",
+    "explanation": "Argumen perlu menanggapi keberatan yang relevan. Pilihan B mempertimbangkan akses dan kelayakan tanpa menyerang pribadi atau membuat klaim yang belum terbukti.",
+    "origin": "Adaptasi soal terpilih dari bank 18 soal; konteks dan pengecoh ditelaah ulang",
+    "old_id": "q17",
+    "bloom": "C5",
+    "version": "artikel-10-bloom-v2"
+  }
+]

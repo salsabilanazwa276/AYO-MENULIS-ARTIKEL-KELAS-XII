@@ -1,0 +1,58 @@
+Rubrik Penilaian
+
+1. Isi/Gagasan (bobot 30%)
+Aspek ini menilai apakah tulisan punya gagasan pokok yang jelas dan sesuai topik.
+
+Skor 4 (Sangat Baik): Gagasan sangat jelas dan relevan dengan topik, dan dikembangkan mendalam dengan penjelasan, contoh, atau data. Pembaca langsung paham apa yang ingin disampaikan penulis.
+Skor 3 (Baik): Gagasan jelas dan relevan, tetapi pengembangannya belum terlalu mendalam.
+Skor 2 (Cukup): Gagasan ada, tetapi masih umum atau kabur, atau sebagian isi menyimpang dari topik.
+Skor 1 (Perlu Bimbingan): Gagasan tidak jelas, tidak sesuai topik, atau hanya berupa kalimat-kalimat yang berdiri sendiri.
+
+2. Struktur Artikel (bobot 25%)
+Aspek ini menilai kelengkapan bagian artikel (judul, pembuka, isi, penutup) dan keterkaitan antarbagian.
+
+Skor 4: Struktur lengkap, dan hubungan antarbagian sangat sistematis. Setiap paragraf punya satu gagasan pokok dan peralihannya mengalir.
+Skor 3: Struktur lengkap, tetapi ada satu-dua peralihan antarparagraf yang kurang mulus.
+Skor 2: Ada satu bagian yang hilang (misalnya penutup) atau urutannya kurang runtut.
+Skor 1: Struktur tidak tertata, dan tidak jelas mana pembuka, isi, dan penutup.
+
+3. Argumentasi (bobot 20%)
+Aspek ini menilai kekuatan alasan dan bukti yang mendukung pendapat penulis.
+
+Skor 4: Pendapat didukung alasan dan bukti yang kuat (data, contoh nyata, atau kutipan sumber), penalarannya logis, dan tidak ada kesesatan berpikir.
+Skor 3: Pendapat didukung alasan dan bukti yang cukup, tetapi ada satu argumen yang masih lemah.
+Skor 2: Pendapat banyak berupa pernyataan tanpa bukti, atau ada penalaran yang kurang tepat.
+Skor 1: Pendapat tidak didukung alasan, atau alasan yang diberikan tidak berkaitan dengan pendapat.
+
+4. Kebahasaan (bobot 15%)
+Aspek ini menilai ketepatan bahasa: kata baku, kalimat efektif, ejaan, dan tanda baca.
+
+Skor 4: Bahasa baku, kalimat efektif, dan sesuai kaidah, dengan nyaris tanpa kesalahan.
+Skor 3: Ada beberapa kesalahan kecil, tetapi tidak mengganggu pemahaman.
+Skor 2: Kesalahan cukup banyak (kata tidak baku, kalimat bertele-tele, ejaan keliru) dan sebagian mengganggu pemahaman.
+Skor 1: Kesalahan sangat banyak sehingga tulisan sulit dipahami.
+
+5. Kreativitas (bobot 10%)
+Aspek ini menilai cara penyajian gagasan yang menarik dan khas.
+
+Skor 4: Penyajian menarik dan memiliki sudut pandang baru. Judul, kalimat pembuka, gaya bahasa, atau contoh yang dipakai terasa khas.
+Skor 3: Penyajian menarik pada sebagian besar bagian, tetapi sudut pandangnya masih umum.
+Skor 2: Penyajian cenderung datar dan mirip tulisan kebanyakan.
+Skor 1: Tidak tampak upaya menyajikan gagasan secara menarik.
+Cara Menghitung Nilai
+
+Rumus untuk setiap aspek: (skor yang diperoleh ÷ 4) × bobot aspek. Nilai akhir adalah jumlah dari kelima aspek. Total maksimalnya 100.
+
+Contoh: seorang siswa mendapat skor Isi 3, Struktur 4, Argumentasi 3, Kebahasaan 2, dan Kreativitas 3.
+
+Isi: 3 ÷ 4 × 30 = 22,5
+Struktur: 4 ÷ 4 × 25 = 25
+Argumentasi: 3 ÷ 4 × 20 = 15
+Kebahasaan: 2 ÷ 4 × 15 = 7,5
+Kreativitas: 3 ÷ 4 × 10 = 7,5
+
+Nilai akhirnya 22,5 + 25 + 15 + 7,5 + 7,5 = 77,5.
+
+
+
+Catatan penilaian kuis: pada versi baru terdapat 10 soal. Setiap jawaban benar mendapat 10; salah 0. Nilai = jumlah benar × 10. Rubrik berbobot di atas khusus tugas artikel dan tidak dipakai untuk menghitung nilai kuis.
