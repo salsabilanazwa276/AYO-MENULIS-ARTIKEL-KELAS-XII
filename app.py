@@ -3,10 +3,15 @@ import os, secrets, json, csv, io, hmac, html
 from datetime import datetime, timezone
 import core
 st.set_page_config(page_title='Ayo Menulis Artikel',page_icon='✍️',layout='wide')
-core.init()
 def config(k,default=''):
     try: return str(st.secrets.get(k,os.environ.get(k,default)))
     except FileNotFoundError: return os.environ.get(k,default)
+core.configure(config('DATABASE_URL'))
+try:
+    core.init()
+except Exception:
+    st.error('Database tidak dapat dihubungkan. Periksa DATABASE_URL pada Secrets atau coba lagi nanti. Data tidak dialihkan ke penyimpanan lain.')
+    st.stop()
 KEY=config('OPENAI_API_KEY'); MODEL=config('OPENAI_MODEL','gpt-4.1-mini'); TEACHER=config('TEACHER_PASSWORD')
 st.markdown("""<style>
 .stApp {background:linear-gradient(135deg,#fffaf5,#fff1eb);color:#352b30;color-scheme:light}
@@ -29,6 +34,37 @@ if 'conversation' not in st.session_state: st.session_state.conversation=secrets
 if 'attempt' not in st.session_state: st.session_state.attempt=secrets.token_hex(12)
 if 'quiz_result' not in st.session_state: st.session_state.quiz_result=None
 
+from remembered_login import device_storage
+pending=st.session_state.get('_device_action', {'action':'read','nonce':'read'})
+device=device_storage(action=pending['action'],token=pending.get('token',''),nonce=pending['nonce'],key='remember_device')
+if isinstance(device,dict) and device.get('nonce')==pending['nonce']:
+    if pending['action']!='read':
+        st.session_state.pop('_device_action',None)
+        st.session_state['_device_token']=device.get('token','')
+        if not device.get('available',False):
+            st.session_state['_remember_notice']='Browser memblokir penyimpanan. Akun tetap bisa digunakan, tetapi Ingat saya tidak aktif.'
+        st.rerun()
+    st.session_state['_device_token']=device.get('token','')
+    if not st.session_state.user and device.get('token'):
+        restored=core.remembered_user(device['token'])
+        if restored:
+            st.session_state.user=restored
+            core.attend(restored['id'])
+        else:
+            st.session_state['_device_action']={'action':'clear','nonce':secrets.token_hex(8)}
+            st.rerun()
+if '_remember_notice' in st.session_state:
+    st.warning(st.session_state.pop('_remember_notice'))
+if not core.persistent():
+    st.warning('Mode uji lokal: data di hosting belum permanen. Pengelola perlu mengisi DATABASE_URL sebelum dipakai untuk tugas siswa.')
+
+def set_login(user,remember_me):
+    core.forget(st.session_state.get('_device_token',''))
+    st.session_state.user=user
+    core.attend(user['id'])
+    st.session_state['_device_action']={'action':'save' if remember_me else 'clear', 'token':core.remember(user['id']) if remember_me else '', 'nonce':secrets.token_hex(8)}
+    st.rerun()
+
 def export(rows,name):
     if not rows: st.info('Belum ada data.'); return
     buf=io.StringIO(); writer=csv.DictWriter(buf,fieldnames=list(rows[0]))
@@ -49,12 +85,14 @@ with st.sidebar:
     if st.session_state.user:
         u=st.session_state.user
         st.write(u['name']+' • '+u['class'])
-        st.caption(f"Interaksi tersimpan: {core.used(u['id'])}/100")
+        st.caption(f"Interaksi tersimpan: {core.used(u['id'])} • tanpa batas jumlah")
     st.caption('🟢 AI daring' if KEY else '📖 Tutor lokal terarah')
     menu=st.radio('🧭 Navigasi',[name for name in NAV_ICONS if name not in {'CP kelas XII — Menulis','Tujuan pembelajaran','Contoh teks artikel','Struktur artikel','Kaidah kebahasaan'}],format_func=lambda name: NAV_ICONS[name]+' '+name)
     if st.session_state.user or st.session_state.teacher:
         if st.button('🚪 Keluar akun'):
+            core.forget(st.session_state.get('_device_token',''))
             for k in list(st.session_state): del st.session_state[k]
+            st.session_state['_device_action']={'action':'clear','nonce':secrets.token_hex(8)}
             st.rerun()
 
 try:
@@ -71,7 +109,7 @@ if menu=='Beranda':
     cols=st.columns(3)
     cols[0].metric('📚 Bagian materi','6')
     cols[1].metric('📝 Soal pilihan ganda',len(core.quiz_questions()))
-    cols[2].metric('💬 Interaksi per akun','100')
+    cols[2].metric('💬 Interaksi per akun','Tanpa batas')
     st.info('Alur belajar: baca CP dan tujuan → pelajari contoh → susun kerangka → kerjakan latihan → tulis artikel → revisi berdasarkan masukan.')
     if st.session_state.user:
         uid=st.session_state.user['id']; p=core.progress(uid)
@@ -88,24 +126,27 @@ elif menu=='Akun siswa':
         with login:
             with st.form('login'):
                 username=st.text_input('Username'); password=st.text_input('Kata sandi',type='password')
+                remember_me=st.checkbox('Ingat saya selama 30 hari di perangkat ini')
+                st.caption('Gunakan hanya pada perangkat pribadi. Keluar akun akan membatalkan akses yang tersimpan.')
                 clicked=st.form_submit_button('Masuk')
             if clicked:
                 user=core.authenticate(username,password)
                 if user:
-                    st.session_state.user=user; core.attend(user['id']); st.rerun()
+                    set_login(user,remember_me)
                 else: st.error('Username atau kata sandi tidak sesuai.')
         with signup:
             with st.form('signup'):
                 username=st.text_input('Buat username'); name=st.text_input('Nama lengkap'); classroom=st.text_input('Kelas',placeholder='XII-1')
                 password=st.text_input('Buat kata sandi (minimal 8 karakter)',type='password')
                 code=st.text_input('Kode kelas (jika diberikan guru)',type='password')
+                remember_signup=st.checkbox('Ingat saya selama 30 hari di perangkat ini',key='remember_signup')
                 clicked=st.form_submit_button('Buat akun')
             if clicked:
                 try:
                     expected=config('CLASS_CODE')
                     if expected and not hmac.compare_digest(code,expected): raise ValueError('Kode kelas tidak sesuai.')
                     user=core.register(username,name,classroom,password)
-                    st.session_state.user=user; core.attend(user['id']); st.rerun()
+                    set_login(user,remember_signup)
                 except ValueError as e: st.error(str(e))
 
 elif menu in map_pages:
@@ -153,14 +194,14 @@ elif menu=='Tanya jawab AI Tutor':
         for h in past:
             with st.chat_message('user',avatar='🧑‍🎓'): st.write(h['prompt'])
             with st.chat_message('assistant',avatar='🤖'): st.markdown(h['answer']); st.caption(h['mode'])
-        prompt=st.chat_input('Misalnya: Jelaskan tesis. Lalu: Bisa beri contoh lain?',max_chars=6000,disabled=core.used(uid)>=100)
+        prompt=st.chat_input('Misalnya: Jelaskan tesis. Lalu: Bisa beri contoh lain?',max_chars=6000)
         if prompt:
             try:
                 with st.spinner('Tutor sedang menyiapkan jawaban...'): core.ask(uid,selected,prompt,KEY,MODEL,topic)
                 st.rerun()
             except (ValueError,RuntimeError) as e: st.error(str(e))
         if past: st.download_button('Unduh percakapan', '\n\n'.join('Siswa: '+h['prompt']+'\nTutor: '+h['answer'] for h in past),file_name='percakapan.txt')
-        st.caption('Percakapan tersimpan. AI daring memakai 12 pasangan terakhir; tutor lokal mengikuti topik dan permintaan lanjutan sederhana. Percakapan baru tidak mengulang kuota.')
+        st.caption('Percakapan tersimpan. AI daring memakai 12 pasangan terakhir; tutor lokal mengikuti topik dan permintaan lanjutan sederhana. Jumlah pertanyaan tidak dibatasi.')
 
 elif menu=='Latihan / kuis':
     st.subheader('📝 Uji pemahamanmu')
@@ -234,7 +275,7 @@ elif menu=='Brainstorming & kerangka':
             result=records[choice]
             st.markdown(result['answer'])
             st.download_button('⬇️ Unduh hasil pengembangan',result['answer'],file_name='pengembangan_ide.txt')
-        st.caption('Satu pengembangan berhasil memakai satu interaksi dari kuota 100. Hasil tersimpan pada akunmu; isian yang belum dikirim belum disimpan. Tanpa API, hasil memakai pola lokal, bukan model generatif.')
+        st.caption('Tidak ada batas jumlah pengembangan per akun. Hasil tersimpan pada akunmu; isian yang belum dikirim belum disimpan. Tanpa API, hasil memakai pola lokal, bukan model generatif.')
 
 elif menu=='Evaluasi & refleksi':
     st.subheader('📄 Saatnya menulis artikelmu')
@@ -269,8 +310,8 @@ elif menu=='Umpan balik AI':
             selected=st.selectbox('Artikel',range(len(items)),format_func=lambda i:items[i]['title']+' • '+items[i]['created'])
             s=items[selected]
             if s['ai_feedback']: st.markdown(s['ai_feedback'])
-            st.caption('Umpan balik AI bersifat formatif. Satu permintaan memakai satu dari 100 interaksi. Guru menentukan nilai akhir.')
-            if st.button('Minta umpan balik AI',disabled=not KEY or core.used(uid)>=100):
+            st.caption('Umpan balik AI bersifat formatif. Tidak ada batas jumlah permintaan per akun. Guru menentukan nilai akhir.')
+            if st.button('Minta umpan balik AI',disabled=not KEY):
                 try:
                     with st.spinner('Membaca artikel...'): core.feedback(s['id'],uid,KEY,MODEL)
                     st.rerun()
@@ -286,7 +327,7 @@ elif menu=='Panduan pemakaian':
 5. Tulis 500–700 kata, cantumkan dua sumber, dan kumpulkan. Gunakan masukan AI untuk revisi; kirim revisi sebagai tulisan baru.
 
 ### Bertanya kepada tutor
-Tanyakan “Apa itu tesis?”, lalu “Beri contoh tentang sampah sekolah”, atau “Apa bedanya dengan topik?”. Pilih **Semua materi** jika ingin berpindah topik. Percakapan dapat dilanjutkan dan dibuka kembali setelah masuk. Kuota 100 interaksi berlaku per akun, termasuk jawaban lokal terarah, brainstorming dan umpan balik daring. Permintaan API gagal tidak memakai kuota. Riwayat tersimpan, tetapi konteks AI dibatasi 12 pasangan terakhir.
+Tanyakan “Apa itu tesis?”, lalu “Beri contoh tentang sampah sekolah”, atau “Apa bedanya dengan topik?”. Pilih **Semua materi** jika ingin berpindah topik. Percakapan dapat dilanjutkan dan dibuka kembali setelah masuk. Jumlah interaksi per akun tidak dibatasi. Layanan API tetap mengikuti saldo dan batas penyedia. Riwayat tersimpan, tetapi konteks AI dibatasi 12 pasangan terakhir.
 
 ### Akun guru
 Guru masuk melalui Dasbor guru menggunakan kata sandi khusus yang ditetapkan pengelola. Guru dapat membaca absensi, kemajuan, hasil kuis, tulisan, refleksi dan riwayat interaksi; memberi skor rubrik; serta mengunduh rekap CSV.
@@ -306,9 +347,14 @@ elif menu=='Dasbor guru':
             if hmac.compare_digest(password,TEACHER): st.session_state.teacher=True; st.rerun()
             else: st.error('Kata sandi guru tidak sesuai.')
     else:
-        tab=st.selectbox('Data',['Absensi','Kemajuan materi','Kuis','Artikel & penilaian','Interaksi tutor'])
+        tab=st.selectbox('Data',['Daftar siswa','Absensi','Kemajuan materi','Kuis','Artikel & penilaian','Interaksi tutor'])
         tables={'Absensi':'attendance','Kemajuan materi':'progress','Kuis':'quizzes','Interaksi tutor':'messages'}
-        if tab in tables:
+        if tab=='Daftar siswa':
+            rows=core.students()
+            classroom=st.selectbox('Filter kelas',['Semua kelas']+sorted(set(r['class'] for r in rows)))
+            filtered=[r for r in rows if classroom=='Semua kelas' or r['class']==classroom]
+            st.dataframe(filtered,width='stretch'); export(filtered,'daftar_siswa.csv')
+        elif tab in tables:
             rows=core.report(tables[tab]); classes=sorted(set(r['class'] for r in rows))
             classroom=st.selectbox('Filter kelas',['Semua kelas']+classes)
             filtered=[r for r in rows if classroom=='Semua kelas' or r['class']==classroom]
@@ -335,4 +381,4 @@ elif menu=='Dasbor guru':
                     value=core.weighted(json.loads(item['teacher_scores'])) if item['teacher_scores'] else None
                     rows.append({**item,'nilai_guru':value,'kategori':core.category(value) if value is not None else 'Belum dinilai'})
                 export(rows,'artikel_dan_nilai.csv')
-        st.caption('Data disimpan pada komputer/server tempat aplikasi berjalan. Cadangkan folder data secara berkala.')
+        st.caption('Data tersimpan di database online.' if core.persistent() else 'Mode lokal: cadangkan file database. Penyimpanan permanen online belum aktif.')
