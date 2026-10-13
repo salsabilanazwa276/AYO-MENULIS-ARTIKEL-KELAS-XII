@@ -34,11 +34,25 @@ def startup_diagnostic(error):
         return 'DB11', 'Perintah database dibatalkan atau melampaui batas waktu.'
     return 'DB99', 'Penyebab belum terklasifikasi. Kirim kode diagnosis di bawah kepada pengelola aplikasi.'
 
+@st.cache_resource(show_spinner=False)
+def prepare_database(database_url, local_path, schema_version):
+    core.configure(database_url)
+    core.init()
+    return True
+
+@st.cache_data(ttl=30, show_spinner=False)
+def interaction_count(uid, database_identity):
+    return core.used(uid)
+
+@st.cache_data(show_spinner=False)
+def read_materials(signature):
+    return core.docs()
+
 startup_stage = 'konfigurasi'
 try:
     core.configure(config('DATABASE_URL'))
     startup_stage = 'inisialisasi'
-    core.init()
+    prepare_database(core.DATABASE_URL, str(core.DB), '2026-10-14')
 except Exception as error:
     code, advice = startup_diagnostic(error)
     st.error('Aplikasi belum dapat menyiapkan database. ' + advice)
@@ -65,8 +79,8 @@ div[data-testid="stMetric"] {background:#fff;padding:1rem;border-radius:16px;bor
 [data-testid="stSidebar"] [data-testid="stRadio"] label {padding:3px 0}
 </style>""",unsafe_allow_html=True)
 NAV_ICONS = dict(zip(
-    ['Beranda','Akun siswa','Materi pembelajaran','CP kelas XII — Menulis','Tujuan pembelajaran','Contoh teks artikel','Struktur artikel','Kaidah kebahasaan','Latihan / kuis','Evaluasi & refleksi','Umpan balik AI','Tanya jawab AI Tutor','Brainstorming & kerangka','Panduan pemakaian','Dasbor guru'],
-    ['🏠','🧑‍🎓','📚','🏆','🎯','📖','🧩','🔤','📝','💭','💬','🤖','💡','🧭','👩‍🏫']))
+    ['Beranda','Akun siswa','Materi pembelajaran','CP kelas XII — Menulis','Tujuan pembelajaran','Contoh teks artikel','Struktur artikel','Kaidah kebahasaan','Latihan / kuis','Evaluasi & refleksi','Umpan balik AI','Tanya jawab AI Tutor','Brainstorming & kerangka','Dasbor guru'],
+    ['🏠','🧑‍🎓','📚','🏆','🎯','📖','🧩','🔤','📝','💭','💬','🤖','💡','👩‍🏫']))
 st.title('✍️ Ayo Menulis Artikel')
 st.caption('Dari ide kecil, jadi tulisan yang berarti • Bahasa Indonesia Kelas XII')
 if 'user' not in st.session_state: st.session_state.user=None
@@ -91,9 +105,16 @@ if isinstance(device,dict) and device.get('nonce')==pending['nonce']:
         if restored:
             st.session_state.user=restored
             core.attend(restored['id'])
+            st.session_state['_attendance_day']=(restored['id'],core.now()[:10])
         else:
             st.session_state['_device_action']={'action':'clear','nonce':secrets.token_hex(8)}
             st.rerun()
+if st.session_state.user:
+    attendance_key=(st.session_state.user['id'],core.now()[:10])
+    if st.session_state.get('_attendance_day') != attendance_key:
+        core.attend(attendance_key[0])
+        st.session_state['_attendance_day']=attendance_key
+
 if '_remember_notice' in st.session_state:
     st.warning(st.session_state.pop('_remember_notice'))
 if not core.persistent():
@@ -103,6 +124,7 @@ def set_login(user,remember_me):
     core.forget(st.session_state.get('_device_token',''))
     st.session_state.user=user
     core.attend(user['id'])
+    st.session_state['_attendance_day']=(user['id'],core.now()[:10])
     st.session_state['_device_action']={'action':'save' if remember_me else 'clear', 'token':core.remember(user['id']) if remember_me else '', 'nonce':secrets.token_hex(8)}
     st.rerun()
 
@@ -126,7 +148,7 @@ with st.sidebar:
     if st.session_state.user:
         u=st.session_state.user
         st.write(u['name']+' • '+u['class'])
-        st.caption(f"Interaksi tersimpan: {core.used(u['id'])} • tanpa batas jumlah")
+        st.caption(f"Interaksi tersimpan: {interaction_count(u['id'], core.DATABASE_URL or str(core.DB))} • tanpa batas jumlah")
     st.caption('🟢 AI daring' if KEY else '📖 Tutor lokal terarah')
     menu=st.radio('🧭 Navigasi',[name for name in NAV_ICONS if name not in {'CP kelas XII — Menulis','Tujuan pembelajaran','Contoh teks artikel','Struktur artikel','Kaidah kebahasaan'}],format_func=lambda name: NAV_ICONS[name]+' '+name)
     if st.session_state.user or st.session_state.teacher:
@@ -137,7 +159,8 @@ with st.sidebar:
             st.rerun()
 
 try:
-    all_docs=core.docs()
+    signature=tuple((str(f),f.stat().st_mtime_ns,f.stat().st_size) for f in sorted((core.BASE/'database').glob('*')) if f.is_file())
+    all_docs=read_materials(signature)
 except (FileNotFoundError,UnicodeError,ValueError) as error:
     st.error('Bahan aplikasi belum lengkap atau tidak dapat dibaca. Salin seluruh isi paket lengkap, termasuk folder database, ke folder yang berisi app.py. Pertahankan folder data dan secrets.toml milikmu.')
     st.caption(str(error))
@@ -145,20 +168,26 @@ except (FileNotFoundError,UnicodeError,ValueError) as error:
 map_pages={'Materi pembelajaran':['01_materi.txt'],'CP kelas XII — Menulis':['02_cp.txt'],'Tujuan pembelajaran':['03_tujuan.txt'],'Contoh teks artikel':['04_contoh_artikel.txt','04_contoh_pendamping.txt'],'Struktur artikel':['05_struktur.txt'],'Kaidah kebahasaan':['06_kebahasaan.txt']}
 
 if menu=='Beranda':
-    st.subheader('🌟 Punya pendapat? Yuk, jadikan artikel!')
-    st.write('Pelajari cara merumuskan gagasan, membangun argumen, memeriksa sumber, dan menyunting tulisan. Kamu bisa bertanya pada tutor, berlatih, lalu mengirim artikel untuk dinilai guru.')
-    cols=st.columns(3)
-    cols[0].metric('📚 Bagian materi','6')
-    cols[1].metric('📝 Soal pilihan ganda',len(core.quiz_questions()))
-    cols[2].metric('💬 Interaksi per akun','Tanpa batas')
-    st.info('Alur belajar: baca CP dan tujuan → pelajari contoh → susun kerangka → kerjakan latihan → tulis artikel → revisi berdasarkan masukan.')
-    if st.session_state.user:
-        uid=st.session_state.user['id']; p=core.progress(uid)
-        st.progress(sum(x['done'] for x in p.values())/len(all_docs),text='Kemajuan materi ditandai oleh siswa')
-        st.write('⭐ Favorit:',', '.join(x['topic'] for x in p.values() if x['favorite']) or 'Belum ada')
-        qs=core.report('quizzes',uid)
-        if qs: st.metric('Nilai kuis tertinggi',max(q['score'] for q in qs))
-        core.attend(uid)
+    st.markdown('''### 🏠 Beranda
+Selamat datang! Ikuti langkah berikut untuk mulai belajar menulis artikel.
+
+### Belajar dalam lima langkah
+1. Daftar dengan username, nama, kelas, dan kata sandi. Gunakan akun yang sama agar hasil tidak terpencar.
+2. Baca CP, tujuan, materi, struktur, dan kebahasaan. Favoritkan materi dan tandai selesai.
+3. Pelajari contoh, tandai gagasan, lalu susun kerangka. Tekan Kembangkan ide; hasil dan riwayat pengembangan tersimpan pada akunmu dan dapat diunduh.
+4. Kerjakan kuis sampai lengkap. Hasil dan setiap percobaan tersimpan untuk guru.
+5. Tulis 500–700 kata, cantumkan dua sumber, dan kumpulkan. Gunakan masukan AI untuk revisi; kirim revisi sebagai tulisan baru.
+
+### Bertanya kepada tutor
+Tanyakan “Apa itu tesis?”, lalu “Beri contoh tentang sampah sekolah”, atau “Apa bedanya dengan topik?”. Pilih **Semua materi** jika ingin berpindah topik. Percakapan dapat dilanjutkan dan dibuka kembali setelah masuk. Jumlah pertanyaan per akun tidak dibatasi. Gunakan pertanyaan lanjutan untuk memperdalam pemahamanmu.
+
+### Akun guru
+Guru masuk melalui Dasbor guru menggunakan kata sandi khusus yang ditetapkan pengelola. Guru dapat membaca absensi, kemajuan, hasil kuis, tulisan, refleksi dan riwayat interaksi; memberi skor rubrik; serta mengunduh rekap CSV.
+
+### Mode aplikasi
+Tutor lokal menjawab berdasarkan bahan yang tersedia. Jika AI daring diaktifkan pengelola, pertanyaan dan tulisan yang ditinjau diproses oleh layanan AI. Umpan balik menunjukkan bagian tulisan yang dapat kamu perbaiki; periksa kembali setiap saran, fakta, dan sumber. Guru menentukan nilai akhir.
+''')
+
 
 elif menu=='Akun siswa':
     if st.session_state.user: st.success('Kamu sudah masuk. Absensi hari ini tersimpan.')
@@ -342,40 +371,45 @@ elif menu=='Evaluasi & refleksi':
                 else: st.info('Belum dinilai guru.')
 
 elif menu=='Umpan balik AI':
-    st.subheader('🔍 Revisi satu langkah lebih baik')
-    st.markdown(next(d['text'] for d in all_docs if d['file']=='07_rubrik.txt'))
+    st.subheader('🔍 Kenali hasil tulisanmu, lalu revisi')
+    st.write('Pilih artikel yang sudah kamu kumpulkan. Tinjau gagasan, bagian tulisan, sumber, dan refleksimu sebelum membuat versi berikutnya.')
     if identity_required():
         uid=st.session_state.user['id']; items=core.submissions(uid)
-        if not items: st.info('Kumpulkan artikel di Evaluasi & refleksi terlebih dahulu.')
+        if not items:
+            st.info('Belum ada tulisan. Buka Evaluasi & refleksi, lalu kumpulkan artikel terlebih dahulu.')
         else:
-            selected=st.selectbox('Artikel',range(len(items)),format_func=lambda i:items[i]['title']+' • '+items[i]['created'])
+            selected=st.selectbox('Tulisan yang ingin ditinjau',range(len(items)),format_func=lambda i:items[i]['title']+' • '+items[i]['created'])
             s=items[selected]
-            if s['ai_feedback']: st.markdown(s['ai_feedback'])
-            st.caption('Umpan balik AI bersifat formatif. Tidak ada batas jumlah permintaan per akun. Guru menentukan nilai akhir.')
-            if st.button('Minta umpan balik AI',disabled=not KEY):
+            c1,c2,c3=st.columns(3)
+            c1.metric('Jumlah kata',len(s['body'].split()))
+            c2.metric('Entri sumber',len([v for v in s['sources'].splitlines() if v.strip()]))
+            c3.metric('Penilaian guru','Sudah dinilai' if s['teacher_scores'] else 'Belum dinilai')
+            with st.expander('Lihat kembali artikel, sumber, dan refleksimu'):
+                st.write(s['body']); st.write('Sumber:',s['sources']); st.write('Refleksi:',s['reflection'] or 'Belum diisi.')
+            if not KEY:
+                st.info('AI daring belum aktif. Pemeriksaan lokal menggunakan pola teks dan pertanyaan revisi; hasilnya bukan penilaian mendalam oleh AI.')
+            if st.button('Tinjau tulisan saya',type='primary'):
                 try:
-                    with st.spinner('Membaca artikel...'): core.feedback(s['id'],uid,KEY,MODEL)
+                    with st.spinner('Meninjau tulisanmu...'):
+                        core.feedback(s['id'],uid,KEY,MODEL)
+                    interaction_count.clear()
                     st.rerun()
                 except (ValueError,RuntimeError) as e: st.error(str(e))
-            if not KEY: st.info('API belum diaktifkan. Gunakan rubrik untuk menilai diri dan minta masukan guru.')
-
-elif menu=='Panduan pemakaian':
-    st.markdown('''### Belajar dalam lima langkah
-1. Daftar dengan username, nama, kelas, dan kata sandi. Gunakan akun yang sama agar hasil tidak terpencar.
-2. Baca CP, tujuan, materi, struktur, dan kebahasaan. Favoritkan materi dan tandai selesai.
-3. Pelajari contoh, tandai gagasan, lalu susun kerangka. Tekan Kembangkan ide; hasil dan riwayat pengembangan tersimpan pada akunmu dan dapat diunduh.
-4. Kerjakan kuis sampai lengkap. Hasil dan setiap percobaan tersimpan untuk guru.
-5. Tulis 500–700 kata, cantumkan dua sumber, dan kumpulkan. Gunakan masukan AI untuk revisi; kirim revisi sebagai tulisan baru.
-
-### Bertanya kepada tutor
-Tanyakan “Apa itu tesis?”, lalu “Beri contoh tentang sampah sekolah”, atau “Apa bedanya dengan topik?”. Pilih **Semua materi** jika ingin berpindah topik. Percakapan dapat dilanjutkan dan dibuka kembali setelah masuk. Jumlah interaksi per akun tidak dibatasi. Layanan API tetap mengikuti saldo dan batas penyedia. Riwayat tersimpan, tetapi konteks AI dibatasi 12 pasangan terakhir.
-
-### Akun guru
-Guru masuk melalui Dasbor guru menggunakan kata sandi khusus yang ditetapkan pengelola. Guru dapat membaca absensi, kemajuan, hasil kuis, tulisan, refleksi dan riwayat interaksi; memberi skor rubrik; serta mengunduh rekap CSV.
-
-### Mode aplikasi
-Tanpa API, materi, kuis 10 soal, pengumpulan artikel, rekap, jawaban lokal terarah, dan brainstorming berbasis pola tersedia. AI daring membutuhkan koneksi internet serta kunci API milik pengelola. Teks pertanyaan dan potongan materi dikirim ke penyedia AI; artikel dikirim ketika siswa meminta umpan balik. Nama, username, dan kata sandi tidak disisipkan ke permintaan AI. Hasil AI perlu diperiksa, terutama fakta dan sumber.
-''')
+            result=core.read_feedback(s['ai_feedback'])
+            if result:
+                st.caption('AI daring' if result['mode']=='online' else 'Pemeriksaan lokal berbasis pola')
+                labels={'summary':'Ringkasan tulisanmu','strengths':'Bagian yang sudah baik','improvements':'Bagian yang perlu ditinjau','suggestions':'Saran perbaikan','reflection':'Tanggapan terhadap refleksimu','next_steps':'Langkah revisi berikutnya'}
+                for field,label in labels.items():
+                    with st.container(border=True):
+                        st.markdown('### '+label)
+                        for item in result[field]: st.write('• '+item)
+            elif s['ai_feedback']:
+                with st.expander('Umpan balik sebelumnya'):
+                    st.markdown(s['ai_feedback'])
+                st.info('Tekan Tinjau tulisan saya untuk mendapatkan tampilan umpan balik yang baru.')
+            else:
+                st.info('Tekan Tinjau tulisan saya untuk melihat hasil pemeriksaan artikel ini.')
+            st.caption('Periksa kembali setiap saran. Sumber belum diverifikasi. Nilai akhir ditentukan guru; kumpulkan revisi sebagai tulisan baru melalui Evaluasi & refleksi.')
 
 elif menu=='Dasbor guru':
     st.subheader('👩‍🏫 Ruang guru')
@@ -408,7 +442,13 @@ elif menu=='Dasbor guru':
             else:
                 selected=st.selectbox('Tulisan siswa',range(len(items)),format_func=lambda i:items[i]['name']+' • '+items[i]['title']+' • '+items[i]['created'])
                 s=items[selected]; st.write(s['body']); st.write('Sumber siswa:',s['sources']); st.write('Refleksi:',s['reflection'])
-                with st.expander('Umpan balik AI'): st.write(s['ai_feedback'] or 'Belum diminta.')
+                with st.expander('Umpan balik tulisan'):
+                    review=core.read_feedback(s['ai_feedback'])
+                    if review:
+                        for field,label in {'summary':'Ringkasan','strengths':'Bagian yang sudah baik','improvements':'Bagian yang perlu ditinjau','suggestions':'Saran perbaikan','reflection':'Refleksi','next_steps':'Langkah berikutnya'}.items():
+                            st.markdown('**'+label+'**')
+                            for item in review[field]: st.write('• '+item)
+                    else: st.write(s['ai_feedback'] or 'Belum diminta.')
                 old=json.loads(s['teacher_scores']) if s['teacher_scores'] else {}
                 with st.form('grading-'+s['id']):
                     scores={k:st.slider(k+f' ({w}%)',1,4,old.get(k,3)) for k,w in core.WEIGHTS.items()}

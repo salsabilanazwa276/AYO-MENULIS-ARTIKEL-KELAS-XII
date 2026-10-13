@@ -1,5 +1,7 @@
 """Small DB-API bridge for the application's fixed SQL statements."""
 import re
+from functools import lru_cache
+from psycopg_pool import ConnectionPool
 import psycopg
 from psycopg.rows import dict_row
 
@@ -25,9 +27,18 @@ def postgres_sql(sql):
     if ignore: sql=sql.rstrip(';')+' ON CONFLICT DO NOTHING'
     return sql
 
+@lru_cache(maxsize=2)
+def connection_pool(url):
+    return ConnectionPool(url, min_size=0, max_size=4, open=True, timeout=15,
+        max_idle=60, max_lifetime=600, reconnect_timeout=15,
+        check=ConnectionPool.check_connection,
+        kwargs={'row_factory':dict_row,'connect_timeout':10,'sslmode':'require',
+                'prepare_threshold':None})
+
 class PostgresConnection:
     def __init__(self,url):
-        self.raw=psycopg.connect(url,row_factory=dict_row,connect_timeout=10,sslmode='require',prepare_threshold=None)
+        self._context=connection_pool(url).connection()
+        self.raw=None
     def execute(self,sql,params=()):
         return Result(self.raw.execute(postgres_sql(sql),params))
     def executescript(self,script):
@@ -35,9 +46,8 @@ class PostgresConnection:
         self.raw.execute('SELECT pg_advisory_xact_lock(842197320)')
         for statement in script.split(';'):
             if statement.strip(): self.execute(statement.strip())
-    def __enter__(self): return self
+    def __enter__(self):
+        self.raw=self._context.__enter__()
+        return self
     def __exit__(self,typ,value,tb):
-        try:
-            if typ: self.raw.rollback()
-            else: self.raw.commit()
-        finally: self.raw.close()
+        return self._context.__exit__(typ,value,tb)
